@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سجل العملاء</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#5b2a86">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="العملاء">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+:root{
+  --bg:#f4f0f8; --ink:#2a1740; --muted:#76688a; --line:#ddd2ea; --card:#ffffff; --card-sel:#f3eafb;
+  --pri:#5b2a86; --pri-d:#461f69; --pri-soft:#efe5f8;
+  --c-main:#3c1760;      /* الصفحة الرئيسية */
+  --c-client:#5b2a86;    /* صفحة العميل */
+  --c-fields:#3a4bb0;    /* صفحة الحقول */
+  --c-settings:#0b7f86;  /* صفحة الإعدادات */
+  --c-import:#a3347a;    /* صفحة الاستيراد */
+  --xls:#1d7a46; --doc:#2b5fb3; --pdf:#b3322c;
+  --warn:#e8a317; --danger:#c4372c; --ok:#2b8a57; --ind:#2b8a57;
+}
+[data-theme=dark]{
+  --bg:#150d1f; --ink:#f0e8f8; --muted:#a898bd; --line:#3a2a4e; --card:#22162f; --card-sel:#2f1e45;
+  --pri:#8a4fc4; --pri-d:#a16adb; --pri-soft:#2f1e45;
+  --c-main:#251040; --c-client:#4a2373; --c-fields:#2c3a8c; --c-settings:#0a6168;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Segoe UI",Tahoma,"Noto Naskh Arabic",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5;padding-bottom:calc(var(--barh,70px) + 80px);transition:background .2s,color .2s}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+
+header{background:var(--c-main);color:#fff;padding:10px 14px;position:sticky;top:0;z-index:5}
+header .row{display:flex;align-items:center;gap:8px;max-width:1100px;margin:auto;flex-wrap:wrap}
+.logo-badge{background:#fff;border-radius:10px;padding:3px 10px;display:inline-flex;align-items:center;height:42px}
+.logo-badge img{height:32px;max-width:110px;object-fit:contain;display:block}
+header h1{font-size:19px;margin:0;flex:1;min-width:110px}
+.ind{display:inline-flex;align-items:center;gap:6px;font-size:13px;background:#ffffff1f;border-radius:99px;padding:4px 12px;white-space:nowrap}
+.ind::before{content:"";width:9px;height:9px;border-radius:50%;background:#5fe08f}
+.ind.saving::before{background:#ffc94d;animation:pulse 1s infinite}
+.ind.error::before{background:#ff6b5e}
+@keyframes pulse{50%{opacity:.3}}
+.btn{border:0;border-radius:10px;padding:10px 16px;background:var(--pri);color:#fff;font-weight:600}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:transparent;color:var(--pri);border:1.5px solid var(--pri)}
+[data-theme=dark] .btn.ghost{color:#cfa9f2;border-color:#8a4fc4}
+.btn.light{background:#ffffff26;color:#fff}
+.btn.danger{background:var(--danger)}
+.btn.small{padding:6px 12px;font-size:14px;border-radius:8px}
+
+main{max-width:1100px;margin:auto;padding:14px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tools input[type=search]{flex:1;min-width:160px;padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--card)}
+.tools select{padding:10px;border:1.5px solid var(--line);border-radius:10px;background:var(--card)}
+.banner{background:#fff4d6;color:#4a3300;border:1.5px solid var(--warn);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-weight:600}
+.count{color:var(--muted);font-size:14px;margin:4px 2px 10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;align-items:start}
+.card{background:var(--card);border-radius:14px;padding:14px;border:1.5px solid var(--line);border-inline-start:5px solid var(--pri)}
+.card.sel{border-color:var(--pri);background:var(--card-sel)}
+.card .top{display:flex;align-items:center;gap:10px}
+.card .top input[type=checkbox]{width:22px;height:22px;accent-color:var(--pri)}
+.card .name{font-weight:700;font-size:18px;flex:1;word-break:break-word;background:none;border:0;padding:8px 0;text-align:start;display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;color:inherit}
+.chev{color:var(--muted);font-size:13px;transition:transform .2s}
+.card.open .chev{transform:rotate(180deg)}
+.card .more{display:none;margin-top:8px;padding-top:10px;border-top:1.5px dashed var(--line)}
+.card.open .more{display:block}
+.card .none{color:var(--muted);font-size:14px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:15px;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;word-break:break-word;white-space:pre-wrap}
+.card .acts{display:flex;gap:8px;margin-top:12px}
+.chip{display:inline-block;padding:1px 10px;border-radius:99px;color:#fff;font-size:13px;font-weight:600}
+.late{color:var(--danger);font-weight:700}
+.empty{text-align:center;color:var(--muted);padding:40px 10px;background:var(--card);border-radius:14px;border:1.5px dashed var(--line)}
+.empty .logo-badge{height:56px;margin-bottom:10px;border:1px solid var(--line)}
+.empty .logo-badge img{height:44px;max-width:150px}
+
+.bar{position:fixed;bottom:0;inset-inline:0;background:var(--card);border-top:1.5px solid var(--line);padding:10px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;z-index:6}
+.bar b{margin-inline-end:6px}
+.bar .bulk{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-inline:8px;margin-inline:4px;border-inline:1.5px solid var(--line)}
+.bar .bulk[hidden]{display:none}
+.bar select,.bar input[type=date]{padding:6px 8px;border:1.5px solid var(--line);border-radius:8px;background:var(--card)}
+.bar label{font-size:14px;display:flex;align-items:center;gap:4px}
+.dot{color:var(--danger);font-size:12px;margin-inline-end:6px}
+.cp{width:30px;height:30px;font-size:14px;vertical-align:middle}
+.kv a{color:var(--pri);font-weight:600}
+[data-theme=dark] .kv a{color:#cfa9f2}
+.bar [data-exp=xls]{background:var(--xls)}
+.bar [data-exp=doc]{background:var(--doc)}
+.bar [data-exp=pdf]{background:var(--pdf)}
+.fab{position:fixed;left:16px;bottom:calc(var(--barh,70px) + 14px);z-index:7;border-radius:99px;padding:14px 22px;box-shadow:0 4px 14px #0005;font-size:17px;background:var(--c-client)}
+
+dialog{border:0;border-radius:16px;padding:0;width:min(580px,94vw);max-height:92vh;box-shadow:0 10px 40px #0007;background:var(--card);color:var(--ink)}
+dialog::backdrop{background:#0a051099}
+.dh{padding:10px 14px;color:#fff;font-weight:700;font-size:18px;display:flex;align-items:center;gap:10px}
+.dh .t{flex:1}
+.dh .logo-badge{height:36px;padding:2px 8px}
+.dh .logo-badge img{height:26px;max-width:90px}
+.dh .ic{background:#ffffff26;border-color:transparent;color:#fff}
+#dlgClient .dh{background:var(--c-client)}
+#dlgFields .dh{background:var(--c-fields)}
+#dlgSettings .dh{background:var(--c-settings)}
+#dlgImport .dh{background:var(--c-import)}
+#dlgImport{width:min(680px,95vw)}
+.impmap{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
+.impmap td,.impmap th{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:middle;text-align:start}
+.impmap th{color:var(--muted);font-size:13px}
+.impmap .src{font-weight:700}
+.impmap .smp{color:var(--muted);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.impmap select{width:100%;padding:6px;border:1.5px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.db{padding:16px 18px;overflow:auto;max-height:66vh}
+.df{padding:12px 18px;border-top:1.5px solid var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.df .ind{background:var(--pri-soft);color:var(--ink);margin-inline-start:auto}
+#dlgFields .btn:not(.ghost){background:var(--c-fields)}
+#dlgSettings .btn:not(.ghost){background:var(--c-settings)}
+#dlgSettings .btn.ghost{color:var(--c-settings);border-color:var(--c-settings)}
+#dlgFields .btn.ghost{color:var(--c-fields);border-color:var(--c-fields)}
+[data-theme=dark] #dlgFields .btn.ghost{color:#a9b4ff;border-color:#a9b4ff}
+[data-theme=dark] #dlgSettings .btn.ghost{color:#6fe0e6;border-color:#6fe0e6}
+.fld{margin-bottom:12px}
+.fld label{display:block;font-size:14px;color:var(--muted);margin-bottom:3px}
+.fld input,.fld select,.fld textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--card)}
+.fld textarea{min-height:80px;resize:vertical}
+.dup{color:#b36b00;font-size:13px;margin-top:3px;display:none}
+.frow{display:flex;gap:6px;align-items:center;background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px;flex-wrap:wrap}
+.frow input,.frow select{padding:7px 9px;border:1.5px solid var(--line);border-radius:8px;background:var(--card)}
+.frow .nm{flex:1;min-width:120px}
+.frow .opts{flex-basis:100%}
+.ic{border:1.5px solid var(--line);background:var(--card);border-radius:8px;width:36px;height:36px;font-size:17px}
+.sec{border:1.5px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.sec h3{margin:0 0 8px;font-size:16px}
+.sec p{margin:6px 0;color:var(--muted);font-size:14px}
+.sec .logo-badge{height:64px;margin:4px 0 8px;border:1px solid var(--line)}
+.sec .logo-badge img{height:50px;max-width:200px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--c-main);color:#fff;padding:10px 18px;border-radius:10px;z-index:30;display:none}
+#exportOv{position:fixed;inset:0;background:#150d1fe6;z-index:40;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:#fff;font-weight:600}
+#exportOv .logo-badge{height:90px;padding:6px 22px}
+#exportOv .logo-badge img{height:76px;max-width:260px}
+#printArea{display:none}
+
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body>*:not(#printArea){display:none!important}
+  body{background:#fff!important;padding:0!important;color:#000}
+  #printArea{display:block!important}
+  #printArea .ph{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #5b2a86;padding-bottom:8px;margin-bottom:10px}
+  #printArea .ph img{height:54px}
+  #printArea h2{margin:0;color:#3c1760}
+  #printArea table{width:100%;border-collapse:collapse;font-size:12px}
+  #printArea th,#printArea td{border:1px solid #6b5a80;padding:5px 7px;text-align:right;vertical-align:top}
+  #printArea th{background:#e9dcf6;color:#3c1760}
+  #printArea .wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:55%;opacity:.07;z-index:-1}
+  @page{size:A4 landscape;margin:12mm}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header><div class="row">
+  <span class="logo-badge"><img class="js-logo" alt="الشعار"></span>
+  <h1>سجل العملاء</h1>
+  <span class="ind" id="indMain">✓ الحفظ تلقائي</span>
+  <button class="btn light small" id="btnTheme" aria-label="تبديل المود">🌙 ليلي</button>
+  <button class="btn light small" id="btnImport">⬆ استيراد</button>
+  <button class="btn light small" id="btnFields">الحقول</button>
+  <button class="btn light small" id="btnSettings">الإعدادات</button>
+</div></header>
+
+<main>
+  <div id="banner"></div>
+  <div class="tools">
+    <input type="search" id="q" placeholder="ابحث بأي بيانات...">
+    <select id="statusFilter"><option value="">كل الحالات</option></select>
+    <select id="sortSel" aria-label="الترتيب"><option value="new">الأحدث أولًا</option><option value="az">أبجديًا</option><option value="follow">أقرب متابعة</option></select>
+  </div>
+  <div class="count"><span id="countTxt"></span>
+    <button class="btn ghost small" id="selAll">تحديد الكل</button>
+    <button class="btn ghost small" id="selNone">إلغاء التحديد</button>
+    <button class="btn ghost small" id="expAll">فتح الكل</button>
+    <button class="btn ghost small" id="colAll">قفل الكل</button>
+  </div>
+  <div class="grid" id="list"></div>
+</main>
+
+<button class="btn fab" id="btnAdd">+ إضافة عميل</button>
+
+<div class="bar" id="bar">
+  <b id="selCount">0 محدد</b>
+  <span class="bulk" id="bulk" hidden>
+    <button class="btn small danger" id="bulkDel">🗑 حذف المحدد</button>
+    <select id="bulkStatus" aria-label="تغيير الحالة للمحدد"></select>
+    <label id="bulkDateWrap">متابعة <input type="date" id="bulkDate"></label>
+  </span>
+  <button class="btn small" data-exp="xls">Excel</button>
+  <button class="btn small" data-exp="doc">Word</button>
+  <button class="btn small" data-exp="pdf">PDF</button>
+</div>
+
+<!-- صفحة العميل -->
+<dialog id="dlgClient">
+  <div class="dh"><span class="logo-badge"><img class="js-logo" alt=""></span><span class="t" id="clientTitle">إضافة عميل</span><button class="ic" data-close aria-label="إغلاق">✕</button></div>
+  <div class="db" id="clientForm"></div>
+  <div class="df">
+    <button class="btn" data-close>تم</button>
+    <span class="ind saveInd">✓ الحفظ تلقائي</span>
+  </div>
+</dialog>
+
+<!-- صفحة الحقول -->
+<dialog id="dlgFields">
+  <div class="dh"><span class="logo-badge"><img class="js-logo" alt=""></span><span class="t">إدارة الحقول</span><button class="ic" data-close aria-label="إغلاق">✕</button></div>
+  <div class="db" id="fieldsBody"></div>
+  <div class="df">
+    <button class="btn" id="addField">+ حقل جديد</button>
+    <button class="btn ghost" data-close>تم</button>
+    <span class="ind saveInd">✓ الحفظ تلقائي</span>
+  </div>
+</dialog>
+
+<!-- صفحة الإعدادات -->
+<dialog id="dlgSettings">
+  <div class="dh"><span class="logo-badge"><img class="js-logo" alt=""></span><span class="t">الإعدادات</span><button class="ic" data-close aria-label="إغلاق">✕</button></div>
+  <div class="db">
+    <div class="sec">
+      <h3>الشعار</h3>
+      <span class="logo-badge"><img class="js-logo" alt=""></span>
+      <p>الشعار الحالي بديل مؤقت. ارفع ملف شعار WE الرسمي (PNG أو JPG أو SVG) وهيظهر في كل الصفحات وفي خلفية الملفات اللي بتنزلها.</p>
+      <div class="btns">
+        <button class="btn" id="btnLogoUp">رفع الشعار</button>
+        <button class="btn ghost" id="btnLogoReset">رجوع للبديل</button>
+      </div>
+      <input type="file" id="logoFile" accept="image/*" hidden>
+    </div>
+    <div class="sec">
+      <h3>نسخ احتياطي</h3>
+      <p>الداتا محفوظة في متصفح الجهاز. لو مسحت بيانات المتصفح ممكن تضيع، فاحفظ نسخة كل فترة.</p>
+      <div class="btns">
+        <button class="btn" id="expBackup">حفظ نسخة (ملف)</button>
+        <button class="btn ghost" id="impBackupBtn">استرجاع من ملف</button>
+      </div>
+      <input type="file" id="impBackup" accept=".json" hidden>
+    </div>
+    <div class="sec">
+      <h3>مشاركة الأداة</h3>
+      <p>ابعت الأداة لأي حد ومعاها العملاء: اللي يفتح الملف يلاقي البيانات جاهزة، وهو كمان يقدر يبعتها لغيره بنفس الطريقة من هنا.</p>
+      <div class="btns">
+        <button class="btn" id="shAll">مشاركة بالبيانات</button>
+        <button class="btn ghost" id="shEmpty">مشاركة فاضية (بنفس الحقول)</button>
+      </div>
+    </div>
+    <div class="sec">
+      <h3>أيقونة على الموبايل</h3>
+      <p id="instTxt"></p>
+      <div class="btns"><button class="btn" id="btnInstall" hidden>📲 تثبيت كأيقونة</button></div>
+    </div>
+  </div>
+  <div class="df"><button class="btn ghost" data-close>إغلاق</button><span class="ind saveInd">✓ الحفظ تلقائي</span></div>
+</dialog>
+
+<input type="file" id="impFile" accept=".json,.xlsx,.xls,.csv,.tsv,.ods,.pdf,.html,.htm,application/pdf,text/html" hidden>
+<!-- صفحة الاستيراد -->
+<dialog id="dlgImport">
+  <div class="dh"><span class="logo-badge"><img class="js-logo" alt=""></span><span class="t">استيراد عملاء</span><button class="ic" data-close aria-label="إغلاق">✕</button></div>
+  <div class="db" id="impBody"></div>
+  <div class="df">
+    <button class="btn" id="impGo">استيراد</button>
+    <button class="btn ghost" data-close>إلغاء</button>
+    <span class="ind" id="impSum"></span>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+<div id="exportOv"><span class="logo-badge"><img class="js-logo" alt=""></span><span id="ovTxt">جاري تجهيز الملف...</span></div>
+<div id="printArea"></div>
+
+<script>
+(function(){
+const SRC="<!DOCTYPE html>\n"+document.documentElement.outerHTML;
+const KEY="clients_tool_v1", THEME_KEY="clients_tool_theme", LOGO_KEY="clients_tool_logo", SORT_KEY="clients_tool_sort", BK_KEY="clients_tool_lastbackup", SEEN_KEY="clients_tool_seedseen";
+const TYPES={text:"نص",phone:"تليفون",long:"نص طويل",number:"رقم",date:"تاريخ",followup:"تاريخ متابعة",list:"قائمة اختيار"};
+const STATUS_COLORS=["#5b2a86","#c47d0e","#2b8a57","#3a4bb0","#c4372c"];
+const DEFAULT_LOGO="data:image/svg+xml;utf8,"+encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100"><text x="100" y="74" font-family="Arial Rounded MT Bold,Arial,sans-serif" font-weight="800" font-size="92" text-anchor="middle" fill="#5b2a86">we</text></svg>');
+
+let state=load();
+let editingId=null, saveTimer=null, lastSaved=null;
+const selected=new Set(), ov=new Map();
+let sortMode=fetchStore(SORT_KEY)||"new";
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function today(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function toast(t){const e=$("toast");e.textContent=t;e.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display="none",2600)}
+function store(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}}
+function fetchStore(k){try{return localStorage.getItem(k)}catch(e){return null}}
+
+function defaults(){
+  const f=(label,type,options)=>({id:uid(),label,type:type||"text",options:options||""});
+  return {fields:[
+    f("العميل"),f("تليفون","phone"),f("وحدة"),f("كبينة"),f("داخل (ك)"),f("بوكس"),f("ترمنال"),
+    f("ملاحظات","long"),f("الحالة","list","جديد,متابعة,مغلق"),f("تاريخ المتابعة","followup")
+  ],clients:[]};
+}
+function load(){
+  try{const s=fetchStore(KEY);if(s){const o=JSON.parse(s);if(o&&o.fields)return o}}catch(e){}
+  return defaults();
+}
+
+/* ---------- الحفظ التلقائي + العلامة ---------- */
+function setInd(mode){
+  let txt;
+  if(mode==="saving")txt="… جاري الحفظ";
+  else if(mode==="error")txt="⚠ تعذر الحفظ";
+  else if(mode==="saved")txt="✓ تم الحفظ "+lastSaved;
+  else txt="✓ الحفظ تلقائي";
+  document.querySelectorAll(".ind").forEach(e=>{e.textContent=txt;e.classList.toggle("saving",mode==="saving");e.classList.toggle("error",mode==="error")});
+}
+function save(){
+  if(store(KEY,JSON.stringify(state))){
+    lastSaved=new Date().toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"});
+    setInd("saved");return true;
+  }
+  setInd("error");toast("تعذر الحفظ في المتصفح، خد نسخة احتياطية");return false;
+}
+
+/* ---------- المود والشعار ---------- */
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme",t);
+  $("btnTheme").textContent=t==="dark"?"☀ نهاري":"🌙 ليلي";
+}
+function initTheme(){
+  let t=fetchStore(THEME_KEY);
+  if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";
+  applyTheme(t);
+}
+function getLogo(){return fetchStore(LOGO_KEY)||DEFAULT_LOGO}
+function applyLogo(){const l=getLogo();document.querySelectorAll("img.js-logo").forEach(i=>i.src=l)}
+function pickLogo(file){
+  const img=new Image(),url=URL.createObjectURL(file);
+  img.onload=()=>{
+    const max=500,r=Math.min(1,max/Math.max(img.width,img.height));
+    const c=document.createElement("canvas");c.width=Math.round(img.width*r)||200;c.height=Math.round(img.height*r)||100;
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    if(store(LOGO_KEY,c.toDataURL("image/png"))){applyLogo();toast("تم تغيير الشعار")}
+    else toast("تعذر حفظ الشعار");
+    URL.revokeObjectURL(url);
+  };
+  img.onerror=()=>toast("الملف مش صورة صالحة");
+  img.src=url;
+}
+
+/* ---------- العرض ---------- */
+function listField(){return state.fields.find(f=>f.type==="list")}
+function followField(){return state.fields.find(f=>f.type==="followup")}
+function opts(f){return (f.options||"").split(",").map(s=>s.trim()).filter(Boolean)}
+function restMatch(c,q){return state.fields.slice(1).some(f=>String(c.values[f.id]||"").toLowerCase().includes(q))}
+function isOpen(c,q){if(ov.has(c.id))return ov.get(c.id);return !!q&&restMatch(c,q)}
+function filtered(){
+  const q=$("q").value.trim().toLowerCase(),sf=$("statusFilter").value,lf=listField(),ff=followField();
+  let r=state.clients.filter(c=>{
+    if(sf&&lf&&(c.values[lf.id]||"")!==sf)return false;
+    if(!q)return true;
+    return state.fields.some(f=>String(c.values[f.id]||"").toLowerCase().includes(q));
+  });
+  if(sortMode==="az"&&state.fields[0]){
+    const k=state.fields[0].id;
+    r.sort((a,b)=>String(a.values[k]||"").localeCompare(String(b.values[k]||""),"ar"));
+  }else if(sortMode==="follow"&&ff){
+    r.sort((a,b)=>{const x=a.values[ff.id]||"",y=b.values[ff.id]||"";
+      if(!x&&!y)return 0;if(!x)return 1;if(!y)return -1;return x<y?-1:x>y?1:0});
+  }
+  return r;
+}
+function renderFilter(){
+  const sel=$("statusFilter"),cur=sel.value,lf=listField();
+  sel.innerHTML='<option value="">'+(lf?"كل: "+esc(lf.label):"كل الحالات")+'</option>';
+  if(lf)opts(lf).forEach(o=>sel.insertAdjacentHTML("beforeend",'<option>'+esc(o)+'</option>'));
+  sel.style.display=lf?"":"none";
+  sel.value=[...sel.options].some(o=>o.value===cur)?cur:"";
+}
+function fmtVal(f,v){
+  if(v===""||v==null)return "";
+  if(f.type==="list"){
+    const i=Math.max(0,opts(f).indexOf(v));
+    return '<span class="chip" style="background:'+STATUS_COLORS[i%STATUS_COLORS.length]+'">'+esc(v)+'</span>';
+  }
+  if(f.type==="followup")
+    return '<span class="'+(v<=today()?"late":"")+'">'+esc(v)+(v<today()?" (متأخر)":v===today()?" (النهاردة)":"")+'</span>';
+  if(f.type==="phone"){
+    const d=String(v).replace(/[^\d+]/g,"");
+    return '<a href="tel:'+esc(d)+'" dir="ltr">'+esc(v)+'</a> <button class="ic cp" data-copy="'+esc(v)+'" aria-label="نسخ الرقم" title="نسخ">📋</button>';
+  }
+  return esc(v);
+}
+function render(){
+  renderFilter();
+  const q=$("q").value.trim().toLowerCase();
+  const list=filtered(),ff=followField(),lf=listField();
+  let late=0;
+  if(ff)state.clients.forEach(c=>{const v=c.values[ff.id];if(v&&v<=today())late++});
+  let ban="";
+  if(late)ban+='<div class="banner">عندك '+late+' عميل موعد متابعتهم النهاردة أو فات</div>';
+  if(state.clients.length){
+    const lb=+fetchStore(BK_KEY)||0,days=lb?(Date.now()-lb)/864e5:Infinity;
+    if(days>=7)ban+='<div class="banner">'+(lb?"آخر نسخة احتياطية من "+Math.floor(days)+" يوم":"لسه ماخدتش نسخة احتياطية")+' <button class="btn small" data-bk>حفظ نسخة الآن</button></div>';
+  }
+  $("banner").innerHTML=ban;
+  $("countTxt").textContent=list.length+" عميل"+(list.length!==state.clients.length?" من "+state.clients.length:"");
+  const box=$("list");
+  if(!list.length){
+    box.innerHTML='<div class="empty" style="grid-column:1/-1"><span class="logo-badge"><img class="js-logo" alt=""></span><div>'+
+      (state.clients.length?"مفيش نتائج للبحث":"لسه مفيش عملاء. اضغط «إضافة عميل» وابدأ.")+'</div></div>';
+    applyLogo();
+  }else{
+    const first=state.fields[0];
+    box.innerHTML=list.map(c=>{
+      const rest=state.fields.slice(1).filter(f=>c.values[f.id]!==""&&c.values[f.id]!=null);
+      const open=isOpen(c,q),fv=ff?c.values[ff.id]:"";
+      const dot=fv&&fv<=today()?'<span class="dot" role="img" aria-label="متابعة مستحقة" title="موعد متابعة">●</span>':"";
+      return '<div class="card'+(selected.has(c.id)?" sel":"")+(open?" open":"")+'">'+
+        '<div class="top"><input type="checkbox" data-sel="'+c.id+'" aria-label="تحديد"'+(selected.has(c.id)?" checked":"")+'>'+
+        '<button class="name" data-tog="'+c.id+'" aria-expanded="'+open+'"><span>'+dot+esc(first?c.values[first.id]||"—":"—")+'</span><span class="chev" aria-hidden="true">▼</span></button></div>'+
+        '<div class="more">'+
+        (rest.length?'<dl class="kv">'+rest.map(f=>'<dt>'+esc(f.label)+'</dt><dd>'+fmtVal(f,c.values[f.id])+'</dd>').join(""):'<p class="none">مفيش بيانات تانية للعميل ده</p>')+(rest.length?'</dl>':'')+
+        '<div class="acts"><button class="btn ghost small" data-edit="'+c.id+'">تعديل</button>'+
+        '<button class="btn ghost small" style="color:var(--danger);border-color:var(--danger)" data-del="'+c.id+'">حذف</button></div></div></div>';
+    }).join("");
+  }
+  const n=selected.size;
+  $("selCount").textContent=n+" محدد";
+  $("bulk").hidden=!n;
+  const bs=$("bulkStatus");
+  if(lf){bs.style.display="";bs.innerHTML='<option value="">تغيير '+esc(lf.label)+'</option>'+opts(lf).map(o=>'<option>'+esc(o)+'</option>').join("")}
+  else bs.style.display="none";
+  $("bulkDateWrap").style.display=ff?"":"none";
+  barH();
+}
+function barH(){document.documentElement.style.setProperty("--barh",$("bar").offsetHeight+"px")}
+function copyTxt(t){
+  const fb=()=>{const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();
+    try{document.execCommand("copy");toast("تم النسخ")}catch(e){toast("تعذر النسخ")}a.remove()};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(()=>toast("تم النسخ"),fb);else fb();
+}
+
+/* ---------- صفحة العميل (حفظ تلقائي) ---------- */
+function openClient(id){
+  editingId=id||null;
+  const c=id?state.clients.find(x=>x.id===id):null;
+  $("clientTitle").textContent=id?"تعديل عميل":"إضافة عميل";
+  $("clientForm").innerHTML=state.fields.map((f,i)=>{
+    const v=c?(c.values[f.id]||""):"";
+    let inp;
+    if(f.type==="long")inp='<textarea data-f="'+f.id+'">'+esc(v)+'</textarea>';
+    else if(f.type==="list")inp='<select data-f="'+f.id+'"><option value=""></option>'+opts(f).map(o=>'<option'+(o===v?" selected":"")+'>'+esc(o)+'</option>').join("")+'</select>';
+    else if(f.type==="phone")inp='<input data-f="'+f.id+'" type="tel" inputmode="tel" dir="ltr" value="'+esc(v)+'">';
+    else if(f.type==="number")inp='<input data-f="'+f.id+'" type="text" inputmode="decimal" value="'+esc(v)+'">';
+    else if(f.type==="date"||f.type==="followup")inp='<input data-f="'+f.id+'" type="date" value="'+esc(v)+'">';
+    else inp='<input data-f="'+f.id+'" type="text" value="'+esc(v)+'">';
+    return '<div class="fld"><label>'+esc(f.label)+'</label>'+inp+(i===0?'<div class="dup" id="dupWarn">⚠ الاسم ده موجود قبل كده</div>':"")+'</div>';
+  }).join("")||"<p>مفيش حقول. أضف حقول من «الحقول».</p>";
+  setInd(lastSaved?"saved":"idle");
+  $("dlgClient").showModal();
+  const first=$("clientForm").querySelector("input,textarea,select");
+  if(first&&!id)first.focus();
+}
+function readForm(){
+  const v={};$("clientForm").querySelectorAll("[data-f]").forEach(e=>v[e.dataset.f]=e.value.trim());return v;
+}
+function queueSave(){setInd("saving");clearTimeout(saveTimer);saveTimer=setTimeout(autosaveClient,350)}
+function autosaveClient(){
+  clearTimeout(saveTimer);saveTimer=null;
+  if(!$("dlgClient").open&&!editingId)return;
+  const values=readForm(),any=Object.values(values).some(v=>v);
+  if(!editingId){
+    if(!any){setInd(lastSaved?"saved":"idle");return}
+    editingId=uid();state.clients.unshift({id:editingId,values});
+    $("clientTitle").textContent="تعديل عميل";
+  }else{
+    const c=state.clients.find(x=>x.id===editingId);if(c)c.values=values;
+  }
+  save();render();
+  const first=state.fields[0],w=$("dupWarn");
+  if(first&&w){
+    const val=values[first.id];
+    w.style.display=val&&state.clients.some(c=>c.id!==editingId&&(c.values[first.id]||"").trim()===val)?"block":"none";
+  }
+}
+
+/* ---------- صفحة الحقول ---------- */
+function renderFields(){
+  $("fieldsBody").innerHTML=state.fields.map((f,i)=>
+    '<div class="frow" data-i="'+i+'">'+
+    '<button class="ic" data-mv="-1" aria-label="فوق"'+(i===0?" disabled":"")+'>↑</button>'+
+    '<button class="ic" data-mv="1" aria-label="تحت"'+(i===state.fields.length-1?" disabled":"")+'>↓</button>'+
+    '<input class="nm" data-k="label" value="'+esc(f.label)+'" aria-label="اسم الحقل">'+
+    '<select data-k="type" aria-label="نوع الحقل">'+Object.keys(TYPES).map(t=>'<option value="'+t+'"'+(t===f.type?" selected":"")+'>'+TYPES[t]+'</option>').join("")+'</select>'+
+    '<button class="ic" data-rm aria-label="حذف الحقل" style="color:var(--danger)">🗑</button>'+
+    (f.type==="list"?'<input class="opts" data-k="options" value="'+esc(f.options)+'" placeholder="الاختيارات مفصولة بفاصلة: جديد,متابعة,مغلق">':"")+
+    '</div>').join("")+'<p style="color:var(--muted);font-size:14px">أول حقل هو اسم الكارت ومنه بيتفحص التكرار. أي تغيير بيتحفظ فورًا.</p>';
+}
+
+/* ---------- التصدير (الشعار في الملفات) ---------- */
+function tableHTML(rows){
+  return '<table border="1" cellspacing="0" cellpadding="5" dir="rtl"><thead><tr>'+
+    state.fields.map(f=>'<th>'+esc(f.label)+'</th>').join("")+'</tr></thead><tbody>'+
+    rows.map(c=>'<tr>'+state.fields.map(f=>'<td>'+esc(c.values[f.id]||"")+'</td>').join("")+'</tr>').join("")+'</tbody></table>';
+}
+function download(name,mime,content){
+  const b=new Blob(["\ufeff"+content],{type:mime+";charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+function withOverlay(fn){
+  const ov=$("exportOv");ov.style.display="flex";
+  setTimeout(()=>{try{fn()}finally{setTimeout(()=>ov.style.display="none",500)}},900);
+}
+function doExport(kind){
+  const rows=state.clients.filter(c=>selected.has(c.id));
+  if(!rows.length){toast("حدد عميل واحد على الأقل");return}
+  const logo=getLogo(),stamp=today();
+  withOverlay(()=>{
+    if(kind==="pdf"){
+      $("printArea").innerHTML='<img class="wm" src="'+logo+'" alt="">'+
+        '<div class="ph"><h2>سجل العملاء — '+stamp+'</h2><img src="'+logo+'" alt=""></div>'+tableHTML(rows);
+      window.print();return;
+    }
+    const doc='<html dir="rtl" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8">'+
+      '<style>table{border-collapse:collapse}td,th{border:1px solid #6b5a80;padding:4px;text-align:right}th{background:#e9dcf6;color:#3c1760}h2{color:#3c1760}</style></head><body>'+
+      '<p style="text-align:center"><img src="'+logo+'" height="70" alt=""></p><h2>سجل العملاء — '+stamp+'</h2>'+tableHTML(rows)+'</body></html>';
+    if(kind==="xls")download("عملاء-"+stamp+".xls","application/vnd.ms-excel",doc);
+    else download("عملاء-"+stamp+".doc","application/msword",doc);
+  });
+}
+
+/* ---------- نسخ احتياطي ---------- */
+function expBackup(){
+  const data=Object.assign({},state,{logo:fetchStore(LOGO_KEY)||null});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:"application/json"}));
+  a.download="نسخة-العملاء-"+today()+".json";document.body.appendChild(a);a.click();a.remove();store(BK_KEY,String(Date.now()));render();
+}
+function impBackup(file){
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const o=JSON.parse(r.result);if(!o.fields||!o.clients)throw 0;
+      if(!confirm("هيتم استبدال البيانات الحالية بالنسخة دي. متأكد؟"))return;
+      if(o.logo)store(LOGO_KEY,o.logo);
+      state={fields:o.fields,clients:o.clients};selected.clear();save();applyLogo();render();$("dlgSettings").close();toast("تم الاسترجاع");
+    }catch(e){toast("الملف غير صالح")}
+  };
+  r.readAsText(file);
+}
+
+/* ---------- استيراد (JSON / Excel / CSV / PDF) ---------- */
+const LIB_XLSX="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+const LIB_PDF="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+const LIB_PDF_WORKER="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+let imp=null;
+function loadScript(src){return new Promise((ok,no)=>{const e=document.createElement("script");e.src=src;e.onload=ok;e.onerror=()=>no(new Error("lib"));document.head.appendChild(e)})}
+async function needXLSX(){if(!window.XLSX)await loadScript(LIB_XLSX);if(!window.XLSX)throw new Error("lib")}
+async function needPDF(){if(!window.pdfjsLib)await loadScript(LIB_PDF);if(!window.pdfjsLib)throw new Error("lib");pdfjsLib.GlobalWorkerOptions.workerSrc=LIB_PDF_WORKER}
+function normLbl(x){return String(x==null?"":x).replace(/[\u064B-\u065F\u0640]/g,"").replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/[\s:：()（）\-_.]/g,"").toLowerCase()}
+function enDigits(x){return String(x).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d))}
+const ALIAS={
+  name:/^(اسم|الاسم|اسمالعميل|العميل|عميل|name|clientname|client|customer|customername|fullname)$/,
+  phone:/^(تليفون|التليفون|رقمالتليفون|موبايل|رقمالموبايل|المحمول|محمول|هاتف|رقمالهاتف|رقم|phone|mobile|tel|telephone|phonenumber)$/
+};
+function isoDate(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function cellStr(c){
+  if(c==null)return "";
+  if(c instanceof Date){return isNaN(c)?"":isoDate(new Date(c.getTime()+12*3600e3))}
+  if(typeof c==="number")return String(c);
+  return String(c).trim();
+}
+function parseJSONGrid(t){
+  const o=JSON.parse(t);
+  if(o&&Array.isArray(o.fields)&&Array.isArray(o.clients)){
+    const g=[o.fields.map(f=>f.label)].concat(o.clients.map(c=>o.fields.map(f=>(c.values&&c.values[f.id])==null?"":c.values[f.id])));
+    g.meta=o.fields;return g;
+  }
+  if(Array.isArray(o)&&o.length&&typeof o[0]==="object"){
+    const keys=[];o.forEach(r=>Object.keys(r).forEach(k=>{if(!keys.includes(k))keys.push(k)}));
+    return [keys].concat(o.map(r=>keys.map(k=>r[k])));
+  }
+  throw new Error("fmt");
+}
+async function parseSheetGrid(file){
+  await needXLSX();
+  const buf=await file.arrayBuffer(),u=new Uint8Array(buf);
+  const bin=(u[0]===0x50&&u[1]===0x4B)||(u[0]===0xD0&&u[1]===0xCF);
+  const wb=bin?XLSX.read(buf,{type:"array",cellDates:true}):XLSX.read(new TextDecoder("utf-8").decode(buf),{type:"string",cellDates:true});
+  let best=[];
+  wb.SheetNames.forEach(n=>{
+    const g=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:""});
+    if(g.length>best.length)best=g;
+  });
+  return best;
+}
+async function parsePdfGrid(file){
+  await needPDF();
+  const pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+  const grid=[];let anyText=false;
+  for(let p=1;p<=pdf.numPages;p++){
+    const tc=await (await pdf.getPage(p)).getTextContent();
+    const its=tc.items.filter(i=>i.str&&i.str.trim()).map(i=>({s:i.str,x:i.transform[4],y:i.transform[5],w:i.width||0,h:Math.abs(i.height)||Math.abs(i.transform[3])||10}));
+    if(its.length)anyText=true;
+    its.sort((a,b)=>b.y-a.y||a.x-b.x);
+    const lines=[];
+    for(const it of its){
+      const L=lines[lines.length-1];
+      if(L&&Math.abs(L.y-it.y)<=Math.max(2,it.h*0.5))L.items.push(it);else lines.push({y:it.y,items:[it]});
+    }
+    for(const L of lines){
+      L.items.sort((a,b)=>a.x-b.x);
+      const hs=L.items.map(i=>i.h).sort((a,b)=>a-b),h=hs[hs.length>>1]||10,thr=Math.max(5,h*0.6);
+      const cells=[];let cur=null,prevEnd=0;
+      for(const it of L.items){
+        if(cur&&it.x-prevEnd<=thr)cur.push(it.s);
+        else{if(cur)cells.push(cur);cur=[it.s]}
+        prevEnd=it.x+it.w;
+      }
+      if(cur)cells.push(cur);
+      grid.push(cells.map(parts=>{
+        const t=parts.join(" ");
+        return (/[\u0600-\u06FF]/.test(t)?parts.slice().reverse():parts).join(" ").replace(/\s+/g," ").trim();
+      }));
+    }
+  }
+  if(!anyText)throw new Error("scan");
+  let ar=0,all=0;
+  grid.forEach(r=>r.forEach(c=>{if(c){all++;if(/[\u0600-\u06FF]/.test(c))ar++}}));
+  if(all&&ar/all>=0.5)grid.forEach(r=>r.reverse());
+  return grid;
+}
+function pickHeader(grid){
+  const meta=grid.meta;
+  const clean=grid.map(r=>r.map(cellStr)).filter(r=>r.some(c=>c));
+  if(!clean.length)throw new Error("empty");
+  const labels=state.fields.map(f=>normLbl(f.label));
+  let bi=-1,bs=0;
+  for(let i=0;i<Math.min(clean.length,15);i++){
+    const sc=clean[i].filter(c=>c&&labels.includes(normLbl(c))).length;
+    if(sc>bs){bs=sc;bi=i}
+  }
+  if(bi<0){
+    const cnt=clean.slice(0,15).map(r=>r.filter(c=>c).length),mx=Math.max.apply(null,cnt);
+    bi=Math.max(0,cnt.findIndex(c=>c>=Math.max(1,mx*0.6)));
+  }
+  const hdr=clean[bi].slice();
+  const hn=hdr.map(normLbl).join("|");
+  const rows=clean.slice(bi+1).filter(r=>r.map(normLbl).join("|")!==hn);
+  const n=Math.max(hdr.length,rows.reduce((m,r)=>Math.max(m,r.length),0));
+  const synth=[];
+  for(let i=0;i<n;i++){if(!hdr[i]){hdr[i]="عمود "+(i+1);synth[i]=true}}
+  return {headers:hdr,rows,synth,meta};
+}
+function parseDateStr(v){
+  v=enDigits(v).trim();
+  let m=v.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
+  if(m)return m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0");
+  m=v.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})$/);
+  if(m){
+    let a=+m[1],b=+m[2],y=+m[3];if(y<100)y+=2000;
+    if(b>12&&a<=12){const t=a;a=b;b=t}
+    if(a>=1&&a<=31&&b>=1&&b<=12)return y+"-"+String(b).padStart(2,"0")+"-"+String(a).padStart(2,"0");
+  }
+  return v;
+}
+async function handleImport(file){
+  const ovEl=$("exportOv"),ovT=$("ovTxt"),old=ovT.textContent;
+  ovT.textContent="جاري قراءة الملف...";ovEl.style.display="flex";
+  try{
+    const n=file.name.toLowerCase();let grid;
+    if(n.endsWith(".json"))grid=parseJSONGrid(await file.text());
+    else if(/\.(xlsx|xls|csv|tsv|ods)$/.test(n))grid=await parseSheetGrid(file);
+    else if(n.endsWith(".pdf"))grid=await parsePdfGrid(file);
+    else if(/\.html?$/.test(n)){
+      const m=(await file.text()).match(/<script id="seedData" type="application\/json">(\{[\s\S]*?)<\/script>/);
+      if(!m)throw new Error("fmt");
+      grid=parseJSONGrid(m[1]);
+    }
+    else throw new Error("type");
+    const r=pickHeader(grid);
+    if(!r.rows.length)throw new Error("empty");
+    openImport(file.name,r);
+  }catch(e){
+    const m=e.message;
+    toast(m==="lib"?"محتاج إنترنت أول مرة عشان أقرا ملفات Excel وPDF":
+      m==="scan"?"الـ PDF ده صور (سكان) ومفيهوش نص أقدر أقراه":
+      m==="empty"?"ملقيتش بيانات في الملف":
+      m==="type"?"الصيغة مش مدعومة: استخدم JSON أو Excel أو CSV أو PDF أو ملف الأداة المشترك":"الملف غير صالح أو تعذرت قراءته");
+  }finally{ovEl.style.display="none";ovT.textContent=old}
+}
+function openImport(name,r){
+  imp=r;
+  const used=new Set(),map=r.headers.map(()=>null);
+  r.headers.forEach((h,i)=>{
+    const nh=normLbl(h),f=nh&&!r.synth[i]&&state.fields.find(x=>!used.has(x.id)&&normLbl(x.label)===nh);
+    if(f){map[i]="f:"+f.id;used.add(f.id)}
+  });
+  r.headers.forEach((h,i)=>{
+    if(map[i]||r.synth[i])return;
+    const nh=normLbl(h),f0=state.fields[0];
+    if(f0&&!used.has(f0.id)&&ALIAS.name.test(nh)){map[i]="f:"+f0.id;used.add(f0.id);return}
+    const pf=state.fields.find(x=>x.type==="phone"&&!used.has(x.id));
+    if(pf&&ALIAS.phone.test(nh)){map[i]="f:"+pf.id;used.add(pf.id)}
+  });
+  r.headers.forEach((h,i)=>{if(!map[i])map[i]=r.synth[i]?"skip":"new"});
+  const first=state.fields[0];
+  $("impBody").innerHTML=
+    '<p style="margin:0 0 6px"><b>'+esc(name)+'</b> — '+r.rows.length+' صف</p>'+
+    '<p style="margin:0;color:var(--muted);font-size:14px">اختار كل عمود في الملف يروح لأنهي حقل عندك:</p>'+
+    '<table class="impmap"><thead><tr><th>عمود الملف</th><th>عينة</th><th>يتحط في</th></tr></thead><tbody>'+
+    r.headers.map((h,i)=>{
+      const smp=[];for(const row of r.rows){if(row[i]){smp.push(row[i]);if(smp.length>=2)break}}
+      return '<tr><td class="src">'+esc(h)+'</td><td class="smp" title="'+esc(smp.join(" | "))+'">'+esc(smp.join(" | "))+'</td><td><select data-i="'+i+'" aria-label="حقل '+esc(h)+'">'+
+        state.fields.map(f=>'<option value="f:'+f.id+'"'+(map[i]==="f:"+f.id?" selected":"")+'>'+esc(f.label)+'</option>').join("")+
+        '<option value="new"'+(map[i]==="new"?" selected":"")+'>＋ حقل جديد: '+esc(h)+'</option>'+
+        '<option value="skip"'+(map[i]==="skip"?" selected":"")+'>تجاهل العمود</option></select></td></tr>';
+    }).join("")+'</tbody></table>'+
+    '<label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="impSkipDup" checked> تخطي العملاء الموجودين عندي بالفعل'+(first?' (نفس «'+esc(first.label)+'»)':'')+'</label>';
+  impSummary();
+  $("dlgImport").showModal();
+}
+function impCompute(apply){
+  const sel=[...document.querySelectorAll("#impBody select")].map(x=>x.value);
+  const skipDup=$("impSkipDup").checked;
+  const created=[],fieldFor=[];
+  sel.forEach((v,i)=>{
+    if(v==="skip")fieldFor[i]=null;
+    else if(v==="new"){
+      const m=imp.meta&&imp.meta[i];
+      const f={id:uid(),label:imp.headers[i],type:(m&&TYPES[m.type])?m.type:"text",options:(m&&m.options)||""};
+      created.push(f);fieldFor[i]=f;
+    }else fieldFor[i]=state.fields.find(x=>"f:"+x.id===v)||null;
+  });
+  const k0=state.fields[0]&&state.fields[0].id;
+  const nk=x=>String(x==null?"":x).trim().toLowerCase();
+  const exist=new Set(state.clients.map(c=>nk(c.values&&c.values[k0])));
+  const recs=[],needOpt=[];let dup=0;
+  imp.rows.forEach(r=>{
+    const values={};
+    fieldFor.forEach((f,i)=>{
+      if(!f)return;
+      let v=String(r[i]==null?"":r[i]).trim();
+      if(!v||values[f.id]!==undefined)return;
+      if(f.type==="date"||f.type==="followup")v=parseDateStr(v);
+      else if(f.type==="phone"||f.type==="number")v=enDigits(v);
+      else if(f.type==="list")needOpt.push([f,v]);
+      values[f.id]=v;
+    });
+    if(!Object.keys(values).length)return;
+    const k=nk(values[k0]);
+    if(skipDup&&k&&exist.has(k)){dup++;return}
+    recs.push({id:uid(),values});
+  });
+  if(apply){
+    state.fields=state.fields.concat(created);
+    needOpt.forEach(([f,v])=>{
+      const cur=(f.options||"").split(",").map(x=>x.trim()).filter(Boolean);
+      if(!cur.some(x=>x.toLowerCase()===v.toLowerCase())){f.options=cur.concat(v).join(",")}
+    });
+    recs.forEach(rc=>state.fields.forEach(f=>{if(rc.values[f.id]===undefined)rc.values[f.id]=""}));
+    state.clients=recs.concat(state.clients);
+  }
+  return {recs,dup,created};
+}
+function impSummary(){
+  const r=impCompute(false);
+  $("impSum").textContent="هيتضاف "+r.recs.length+" عميل"+(r.dup?" · تخطي "+r.dup+" مكرر":"")+(r.created.length?" · "+r.created.length+" حقل جديد":"");
+  $("impGo").disabled=!r.recs.length;
+}
+
+/* ---------- مشاركة الأداة بالبيانات ---------- */
+function buildCopy(withData){
+  let html=SRC.replace(/<script id="seedData" type="application\/json">\{[\s\S]*?<\/script>\s*/,"");
+  const seed={id:Date.now().toString(36),fields:state.fields,clients:withData?state.clients:[],logo:fetchStore(LOGO_KEY)||null};
+  const tag='<script id="seedData" type="application/json">'+JSON.stringify(seed).replace(/</g,"\\u003c").replace(/\u2028/g,"\\u2028").replace(/\u2029/g,"\\u2029")+'<\/script>\n';
+  const i=html.indexOf("<script>");
+  return html.slice(0,i)+tag+html.slice(i);
+}
+async function shareCopy(withData){
+  const html=buildCopy(withData),name="سجل-العملاء"+(withData?"-"+today():"-فاضي")+".html";
+  const file=new File([html],name,{type:"text/html"});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:"سجل العملاء"});return;
+    }
+  }catch(e){if(e&&e.name==="AbortError")return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  toast("اتحفظ الملف، ابعته لأي حد (واتساب، إيميل...)");
+}
+function applySeed(){
+  const el=$("seedData");if(!el)return;
+  let o;try{o=JSON.parse(el.textContent)}catch(e){return}
+  if(!o||!Array.isArray(o.fields)||!Array.isArray(o.clients))return;
+  const sid=String(o.id||"");
+  if(sid&&fetchStore(SEEN_KEY)===sid)return;
+  const had=state.clients.length>0;
+  if(sid)store(SEEN_KEY,sid);
+  if(!had){
+    state={fields:o.fields,clients:o.clients};
+    if(o.logo)store(LOGO_KEY,o.logo);
+    save();applyLogo();render();
+    if(o.clients.length)toast("تم تحميل "+o.clients.length+" عميل من الملف");
+    return;
+  }
+  if(!o.clients.length)return;
+  try{openImport("الملف المشترك",pickHeader(parseJSONGrid(el.textContent)))}catch(e){}
+}
+let deferredInstall=null;
+function initInstall(){
+  const t=$("instTxt"),b=$("btnInstall");
+  const standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone;
+  const web=/^https?:$/.test(location.protocol);
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(standalone)t.textContent="الأداة شغالة دلوقتي كتطبيق على الجهاز.";
+  else if(!web)t.textContent="الملف مفتوح من الجهاز مباشرة، فمينفعش يتحول لأيقونة. لازم الأداة تتحط على رابط ويب (استضافة مجانية)، وبعدها تفتح الرابط من الموبايل وتثبتها. الخطوات في ملف README.";
+  else if(ios)t.textContent="من Safari اضغط زرار المشاركة، وبعدها «إضافة إلى الشاشة الرئيسية».";
+  else t.textContent="اضغط «تثبيت كأيقونة» لو ظهر تحت، أو من قايمة المتصفح ⋮ اختار «تثبيت التطبيق».";
+  window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;b.hidden=false});
+  window.addEventListener("appinstalled",()=>{deferredInstall=null;b.hidden=true;toast("اتثبتت الأداة")});
+  b.onclick=async()=>{if(!deferredInstall)return;deferredInstall.prompt();try{await deferredInstall.userChoice}catch(e){}deferredInstall=null;b.hidden=true};
+  if("serviceWorker" in navigator&&web)navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+
+/* ---------- الأحداث ---------- */
+$("btnAdd").onclick=()=>openClient();
+$("shAll").onclick=()=>shareCopy(true);
+$("shEmpty").onclick=()=>shareCopy(false);
+$("btnImport").onclick=()=>$("impFile").click();
+$("impFile").onchange=e=>{const f=e.target.files[0];e.target.value="";if(f)handleImport(f)};
+$("impBody").addEventListener("change",impSummary);
+$("impGo").onclick=()=>{
+  const r=impCompute(true);
+  selected.clear();save();render();$("dlgImport").close();
+  toast("تم استيراد "+r.recs.length+" عميل"+(r.dup?" وتخطي "+r.dup+" مكرر":""));
+};
+$("btnFields").onclick=()=>{renderFields();$("dlgFields").showModal()};
+$("btnSettings").onclick=()=>$("dlgSettings").showModal();
+$("btnTheme").onclick=()=>{
+  const t=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
+  applyTheme(t);store(THEME_KEY,t);
+};
+$("btnLogoUp").onclick=()=>$("logoFile").click();
+$("logoFile").onchange=e=>{if(e.target.files[0])pickLogo(e.target.files[0]);e.target.value=""};
+$("btnLogoReset").onclick=()=>{try{localStorage.removeItem(LOGO_KEY)}catch(e){}applyLogo();toast("رجع الشعار البديل")};
+$("expBackup").onclick=expBackup;
+$("impBackupBtn").onclick=()=>$("impBackup").click();
+$("impBackup").onchange=e=>{if(e.target.files[0])impBackup(e.target.files[0]);e.target.value=""};
+document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>b.closest("dialog").close());
+$("clientForm").addEventListener("input",queueSave);
+$("clientForm").addEventListener("change",queueSave);
+$("dlgClient").addEventListener("close",()=>{if(saveTimer)autosaveClient();editingId=null;render()});
+$("dlgFields").addEventListener("close",()=>{save();render()});
+$("q").oninput=render;
+$("statusFilter").onchange=render;
+$("selAll").onclick=()=>{filtered().forEach(c=>selected.add(c.id));render()};
+$("selNone").onclick=()=>{selected.clear();render()};
+document.querySelectorAll("[data-exp]").forEach(b=>b.onclick=()=>doExport(b.dataset.exp));
+
+$("list").addEventListener("click",e=>{
+  const t=e.target;
+  const tg=t.closest("[data-tog]");
+  if(tg){const id=tg.dataset.tog,c=state.clients.find(x=>x.id===id);ov.set(id,!isOpen(c,$("q").value.trim().toLowerCase()));render();return}
+  const cp=t.closest("[data-copy]");if(cp){copyTxt(cp.dataset.copy);return}
+  if(t.dataset.sel){t.checked?selected.add(t.dataset.sel):selected.delete(t.dataset.sel);render();return}
+  if(t.dataset.edit)openClient(t.dataset.edit);
+  if(t.dataset.del){
+    const c=state.clients.find(x=>x.id===t.dataset.del);
+    const nm=state.fields[0]?c.values[state.fields[0].id]:"";
+    if(confirm("حذف «"+(nm||"العميل")+"»؟ مش هتقدر تسترجعه.")){
+      state.clients=state.clients.filter(x=>x.id!==c.id);selected.delete(c.id);save();render();
+    }
+  }
+});
+$("fieldsBody").addEventListener("click",e=>{
+  const row=e.target.closest(".frow");if(!row)return;
+  const i=+row.dataset.i;
+  if(e.target.dataset.mv){
+    const j=i+ +e.target.dataset.mv;if(j<0||j>=state.fields.length)return;
+    [state.fields[i],state.fields[j]]=[state.fields[j],state.fields[i]];save();renderFields();
+  }else if(e.target.hasAttribute("data-rm")){
+    const f=state.fields[i];
+    if(confirm("حذف الحقل «"+f.label+"»؟ بياناته عند كل العملاء هتتمسح.")){
+      state.clients.forEach(c=>delete c.values[f.id]);state.fields.splice(i,1);save();renderFields();
+    }
+  }
+});
+$("fieldsBody").addEventListener("change",e=>{
+  const row=e.target.closest(".frow");if(!row||!e.target.dataset.k)return;
+  const f=state.fields[+row.dataset.i];
+  f[e.target.dataset.k]=e.target.value;
+  if(!f.label.trim())f.label="حقل";
+  save();
+  if(e.target.dataset.k==="type")renderFields();
+});
+$("addField").onclick=()=>{
+  state.fields.push({id:uid(),label:"حقل جديد",type:"text",options:""});
+  save();renderFields();
+  const n=$("fieldsBody").querySelectorAll(".nm"),last=n[n.length-1];last.focus();last.select();
+};
+
+$("sortSel").value=["new","az","follow"].includes(sortMode)?sortMode:"new";
+$("sortSel").onchange=e=>{sortMode=e.target.value;store(SORT_KEY,sortMode);render()};
+$("expAll").onclick=()=>{filtered().forEach(c=>ov.set(c.id,true));render()};
+$("colAll").onclick=()=>{filtered().forEach(c=>ov.set(c.id,false));render()};
+$("banner").addEventListener("click",e=>{if(e.target.hasAttribute("data-bk"))expBackup()});
+window.addEventListener("resize",barH);
+$("bulkDel").onclick=()=>{
+  const n=selected.size;if(!n)return;
+  if(!confirm("حذف "+n+" عميل؟ مش هتقدر تسترجعهم، فيفضل تاخد نسخة احتياطية الأول."))return;
+  state.clients=state.clients.filter(c=>!selected.has(c.id));
+  selected.clear();save();render();toast("تم حذف "+n+" عميل");
+};
+$("bulkStatus").onchange=e=>{
+  const v=e.target.value,lf=listField();if(!v||!lf)return;
+  let n=0;state.clients.forEach(c=>{if(selected.has(c.id)){c.values[lf.id]=v;n++}});
+  save();render();toast("تم تغيير "+lf.label+" لـ "+n+" عميل");
+};
+$("bulkDate").onchange=e=>{
+  const v=e.target.value,ff=followField();if(!v||!ff)return;
+  let n=0;state.clients.forEach(c=>{if(selected.has(c.id)){c.values[ff.id]=v;n++}});
+  e.target.value="";save();render();toast("تم تحديد موعد المتابعة لـ "+n+" عميل");
+};
+
+initTheme();applyLogo();render();initInstall();applySeed();
+})();
+</script>
+</body>
+</html>
